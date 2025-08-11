@@ -57,11 +57,15 @@ const ProjectCard = ({
         className="bg-tertiary p-5 rounded-2xl sm:w-[360px] w-full"
       >
         <div className="relative w-full h-[230px]">
-          <img
-            src={image}
-            alt="project_image"
-            className="w-full h-full object-cover object-left rounded-2xl"
-          />
+          <picture>
+            <source srcSet={image.webp} type="image/webp" />
+            <img
+              src={image.png}
+              alt="project_image"
+              className="w-full h-full object-cover object-left rounded-2xl"
+              loading="lazy"
+            />
+          </picture>
 
           <div className="absolute inset-0 flex justify-end gap-2 m-3 card-img_hover">
             {live_demo_link && (
