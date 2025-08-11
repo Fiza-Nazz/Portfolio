@@ -10,20 +10,20 @@ const FloatingParticles = () => {
   
   useFrame((state) => {
     if (particlesRef.current) {
-      particlesRef.current.rotation.y = state.clock.elapsedTime * 0.1;
+      particlesRef.current.rotation.y = state.clock.elapsedTime * 0.05;
     }
   });
 
   return (
     <group ref={particlesRef}>
-      {[...Array(20)].map((_, i) => (
+      {[...Array(10)].map((_, i) => (
         <mesh key={i} position={[
           Math.sin(i * 0.5) * 3,
           Math.cos(i * 0.3) * 2,
           Math.sin(i * 0.7) * 2
         ]}>
-          <sphereGeometry args={[0.02, 8, 8]} />
-          <meshBasicMaterial color="#915EFF" opacity={0.3} transparent />
+          <sphereGeometry args={[0.015, 6, 6]} />
+          <meshBasicMaterial color="#915EFF" opacity={0.2} transparent />
         </mesh>
       ))}
     </group>
@@ -75,20 +75,29 @@ const ComputersCanvas = () => {
   return (
     !isMobile && (
       <Canvas
-        frameloop="always"
+        frameloop="demand"
         shadows
-        dpr={[1, 2]}
+        dpr={[1, 1.5]}
         camera={{ position: [20, 3, 5], fov: 25 }}
-        gl={{ preserveDrawingBuffer: true }}
+        gl={{ 
+          preserveDrawingBuffer: true,
+          powerPreference: "high-performance",
+          antialias: false,
+          stencil: false,
+          depth: true
+        }}
+        performance={{ min: 0.5 }}
       >
         <Suspense fallback={<CanvasLoader />}>
           <OrbitControls
             enableZoom={false}
             enablePan={false}
             autoRotate
-            autoRotateSpeed={1.2}
+            autoRotateSpeed={0.8}
             maxPolarAngle={Math.PI / 2}
             minPolarAngle={Math.PI / 2}
+            enableDamping={true}
+            dampingFactor={0.05}
           />
           <Computers isMobile={isMobile} />
         </Suspense>

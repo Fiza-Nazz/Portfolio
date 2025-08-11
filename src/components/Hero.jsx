@@ -1,8 +1,10 @@
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import React from "react";
 
 import { styles } from "../styles";
-import { ComputersCanvas } from "./canvas";
+
+const ComputersCanvas = React.lazy(() => import("./canvas/Computers"));
 
 const Hero = () => {
   const [currentText, setCurrentText] = useState(0);
@@ -65,7 +67,7 @@ const Hero = () => {
     <section className={`relative w-full h-screen mx-auto overflow-hidden`}>
       {/* Animated Background Particles */}
       <div className="absolute inset-0">
-        {[...Array(20)].map((_, i) => (
+        {[...Array(12)].map((_, i) => (
           <motion.div
             key={i}
             className="absolute w-2 h-2 bg-[#915EFF] rounded-full opacity-20"
@@ -74,11 +76,11 @@ const Hero = () => {
               top: `${Math.random() * 100}%`,
             }}
             animate={{
-              y: [0, -100, 0],
-              opacity: [0.2, 0.8, 0.2],
+              y: [0, -80, 0],
+              opacity: [0.2, 0.6, 0.2],
             }}
             transition={{
-              duration: 3 + Math.random() * 2,
+              duration: 4 + Math.random() * 2,
               repeat: Infinity,
               delay: Math.random() * 2,
             }}
@@ -196,7 +198,9 @@ const Hero = () => {
           {/* Glow effect */}
           <div className="absolute inset-0 bg-gradient-to-l from-[#915EFF]/10 to-transparent pointer-events-none"></div>
           <div className="w-full h-full flex items-center justify-center">
-            <ComputersCanvas />
+            <Suspense fallback={<div className="w-full h-full bg-gradient-to-br from-[#915EFF]/20 to-transparent rounded-lg animate-pulse" />}>
+              <ComputersCanvas />
+            </Suspense>
           </div>
         </div>
       </div>

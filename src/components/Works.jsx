@@ -37,10 +37,11 @@ const ProjectCard = ({
         y: 0,
         scrollTrigger: {
           trigger: el,
-          start: "top bottom",  // Trigger when the top of the element hits the bottom of the viewport
-          end: "top center",    // End when the top reaches the center of the viewport
-          scrub: true,          // Smoothly sync scroll and animation
-          markers: false,       // Set to `true` to see debug markers
+          start: "top 85%", 
+          end: "top 20%",   
+          scrub: false,   
+          markers: false,    
+          toggleActions: "play none none reverse",
         },
       }
     );
@@ -57,15 +58,12 @@ const ProjectCard = ({
         className="bg-tertiary p-5 rounded-2xl sm:w-[360px] w-full"
       >
         <div className="relative w-full h-[230px]">
-          <picture>
-            <source srcSet={image.webp} type="image/webp" />
-            <img
-              src={image.png}
-              alt="project_image"
-              className="w-full h-full object-cover object-left rounded-2xl"
-              loading="lazy"
-            />
-          </picture>
+          <img
+            src={image}
+            alt="project_image"
+            className="w-full h-full object-cover object-left rounded-2xl"
+            loading="lazy"
+          />
 
           <div className="absolute inset-0 flex justify-end gap-2 m-3 card-img_hover">
             {live_demo_link && (
@@ -129,13 +127,14 @@ const Works = () => {
       {
         opacity: 1,
         y: 0,
-        stagger: 0.1, // Stagger delay of 0.3 seconds between each card
+        stagger: 0.15, // Increased stagger delay for smoother performance
         scrollTrigger: {
           trigger: ".works-container",
-          start: "top bottom",  // Trigger when the top of the container reaches the bottom
-          end: "top center",
-          scrub: true,
+          start: "top 80%",  // Trigger when the top of the container reaches 80%
+          end: "top 30%",
+          scrub: false,      // Disable scrub for better performance
           markers: false, // Set to true to see debug markers
+          toggleActions: "play none none reverse", // More efficient than scrub
         },
       }
     );
