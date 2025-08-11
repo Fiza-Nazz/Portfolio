@@ -42,7 +42,7 @@ const Navbar = () => {
             window.scrollTo(0, 0);
           }}
         >
-          <img src={logo} alt='logo' className='w-9 h-9 object-contain' />
+          <img src={logo} alt='logo' className='w-9 h-9 object-contain' loading="lazy" width="36" height="36" />
           <p className='text-white text-[18px] font-bold cursor-pointer flex '>
             Fatima &nbsp;
             <span className='sm:block hidden'> | AI Developer</span>

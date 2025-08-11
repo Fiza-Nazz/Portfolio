@@ -28,10 +28,11 @@ const FeedbackCard = ({ index, testimonial, name, designation, company, image })
         y: 0,
         scrollTrigger: {
           trigger: el,
-          start: "top bottom", // Trigger when the top of the element reaches the bottom of the viewport
-          end: "top center",   // End the animation when the top reaches the center
-          scrub: true,         // Link the animation progress to the scroll position
-          markers: false,      // Set to true if you want to see the markers for debugging
+          start: "top 85%", // Trigger when the top of the element reaches 85% of viewport
+          end: "top 20%",   // End the animation when the top reaches 20%
+          scrub: false,     // Disable scrub for better performance
+          markers: false,   // Set to true if you want to see the markers for debugging
+          toggleActions: "play none none reverse", // More efficient than scrub
         },
       }
     );
@@ -61,6 +62,9 @@ const FeedbackCard = ({ index, testimonial, name, designation, company, image })
             src={image}
             alt={`feedback_by-${name}`}
             className="w-10 h-10 rounded-full object-cover"
+            loading="lazy"
+            width="40"
+            height="40"
           />
         </div>
       </div>

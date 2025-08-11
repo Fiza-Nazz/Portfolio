@@ -67,33 +67,33 @@ const Hero = () => {
     <section className={`relative w-full h-screen mx-auto overflow-hidden`}>
       {/* Animated Background Particles */}
       <div className="absolute inset-0">
-        {[...Array(12)].map((_, i) => (
+        {[...Array(8)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute w-2 h-2 bg-[#915EFF] rounded-full opacity-20"
+            className="absolute w-1.5 h-1.5 bg-[#915EFF] rounded-full opacity-15"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
             }}
             animate={{
-              y: [0, -80, 0],
-              opacity: [0.2, 0.6, 0.2],
+              y: [0, -60, 0],
+              opacity: [0.15, 0.4, 0.15],
             }}
             transition={{
-              duration: 4 + Math.random() * 2,
+              duration: 5 + Math.random() * 3,
               repeat: Infinity,
-              delay: Math.random() * 2,
+              delay: Math.random() * 3,
             }}
           />
         ))}
       </div>
 
       {/* Neural Network Grid */}
-      <div className="absolute inset-0 opacity-10">
+      <div className="absolute inset-0 opacity-5">
         <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
           <defs>
-            <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-              <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#915EFF" strokeWidth="0.1"/>
+            <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#915EFF" strokeWidth="0.2"/>
             </pattern>
           </defs>
           <rect width="100" height="100" fill="url(#grid)" />
@@ -107,7 +107,7 @@ const Hero = () => {
           <motion.div 
             className='w-5 h-5 rounded-full bg-[#915EFF]'
             animate={{ scale: [1, 1.2, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
+            transition={{ duration: 3, repeat: Infinity }}
           />
           <div className='w-1 sm:h-80 h-40 violet-gradient' />
         </div>
@@ -126,7 +126,7 @@ const Hero = () => {
 
           <motion.div variants={itemVariants} className="mt-4">
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" style={{animationDuration: '3s'}}></div>
               <span className="text-green-400 text-sm font-mono">AI System Online</span>
             </div>
             
@@ -177,17 +177,17 @@ const Hero = () => {
             className="mt-8 flex gap-4 text-xs text-secondary"
           >
             <div className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" style={{animationDuration: '3s'}}></div>
               <span>AGI Research</span>
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" style={{animationDuration: '3s'}}></div>
               <span>Web3 Integration</span>
             </div>
             <div className="flex items-center gap-1">
-              <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
+              <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" style={{animationDuration: '3s'}}></div>
               <span>AI Agents</span>
-        </div>
+            </div>
           </motion.div>
         </motion.div>
       </div>
@@ -210,6 +210,7 @@ const Hero = () => {
         className="absolute top-1/4 right-10 text-[#915EFF] opacity-30 z-10"
         variants={floatingVariants}
         animate="animate"
+        style={{ width: "48px", height: "48px" }}
       >
         <div className="text-6xl">🤖</div>
       </motion.div>
@@ -218,7 +219,7 @@ const Hero = () => {
         className="absolute bottom-1/4 right-20 text-[#915EFF] opacity-30 z-10"
         variants={floatingVariants}
         animate="animate"
-        style={{ animationDelay: "1s" }}
+        style={{ width: "32px", height: "32px", animationDelay: "1s" }}
       >
         <div className="text-4xl">⚡</div>
       </motion.div>
@@ -236,7 +237,7 @@ const Hero = () => {
                 y: [0, 24, 0],
               }}
               transition={{
-                duration: 1.5,
+                duration: 2.5,
                 repeat: Infinity,
                 repeatType: "loop",
               }}
@@ -252,9 +253,9 @@ const Hero = () => {
       <div className="absolute bottom-0 left-0 w-full h-20 bg-gradient-to-t from-primary to-transparent">
         <div className="flex justify-center items-center h-full">
           <motion.div
-            className="text-[#915EFF] text-xs font-mono opacity-50"
-            animate={{ x: [0, 100, 0] }}
-            transition={{ duration: 3, repeat: Infinity }}
+            className="text-[#915EFF] text-xs font-mono opacity-30"
+            animate={{ x: [0, 50, 0] }}
+            transition={{ duration: 6, repeat: Infinity }}
           >
             Processing AI models... Loading neural networks... Initializing agents...
           </motion.div>

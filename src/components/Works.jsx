@@ -63,6 +63,8 @@ const ProjectCard = ({
             alt="project_image"
             className="w-full h-full object-cover object-left rounded-2xl"
             loading="lazy"
+            width="360"
+            height="230"
           />
 
           <div className="absolute inset-0 flex justify-end gap-2 m-3 card-img_hover">
@@ -76,6 +78,9 @@ const ProjectCard = ({
                   src={web}
                   alt="live demo"
                   className="w-1/2 h-1/2 object-contain"
+                  loading="lazy"
+                  width="20"
+                  height="20"
                 />
               </div>
             )}
@@ -89,6 +94,9 @@ const ProjectCard = ({
                   src={github}
                   alt="source code"
                   className="w-1/2 h-1/2 object-contain"
+                  loading="lazy"
+                  width="20"
+                  height="20"
                 />
               </div>
             )}

@@ -15,19 +15,16 @@ const Tech = () => {
         y: 80
       },
       {
-
-
-
-        
         opacity: 1,
         y: 0,
-        duration: 2.5,
-        stagger: 0.1, 
+        duration: 1.5,
+        stagger: 0.15, 
         scrollTrigger: {
           trigger: ".tech-icons-wrapper", 
           start: "top 80%", 
           end: "bottom 70%", 
-          scrub: true, 
+          scrub: false, 
+          toggleActions: "play none none reverse",
         },
       }
     );
@@ -45,6 +42,8 @@ const Tech = () => {
                 alt={technology.name}
                 className="tech-icon w-full h-full object-contain"
                 loading="lazy"
+                width="112"
+                height="112"
               />
             </picture>
           </div>
