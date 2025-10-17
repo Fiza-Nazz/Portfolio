@@ -120,7 +120,7 @@ const Hero = () => {
         >
           <motion.div variants={itemVariants}>
           <h1 className={`${styles.heroHeadText} text-white`}>
-              Hi, I'm <span className='text-[#915EFF]'>Fatima</span>
+              Hi, I'm <span className='text-[#915EFF]'>FiZa</span>
           </h1>
           </motion.div>
 

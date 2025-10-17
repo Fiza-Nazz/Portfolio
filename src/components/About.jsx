@@ -1,304 +1,709 @@
 import React, { useRef, useEffect, useState } from "react";
-import { Tilt } from "react-tilt";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { motion } from "framer-motion";
+import { motion, useMotionValue, useSpring, useInView } from "framer-motion";
 
-import { styles } from "../styles";
-import { services } from "../constants";
-import { SectionWrapper } from "../hoc";
+// Mock data (replace with your actual imports)
+const styles = {
+  sectionSubText: "text-sm uppercase tracking-[4px] text-cyan-400 font-light",
+  sectionHeadText: "text-white font-black md:text-6xl sm:text-5xl xs:text-4xl text-3xl"
+};
 
-gsap.registerPlugin(ScrollTrigger);
+const services = [
+  { title: "Full-Stack Development", icon: "🚀" },
+  { title: "AI Engineering", icon: "🤖" },
+  { title: "UI/UX Design", icon: "🎨" },
 
-const useGsap = (elementRef, animation, delay = 0) => {
+];
+
+const SectionWrapper = (Component, idName) =>
+  function HOC() {
+    return (
+      <section id={idName} className="relative w-full mx-auto">
+        <Component />
+      </section>
+    );
+  };
+
+// Neural Network Background Component
+const NeuralBackground = () => {
+  const canvasRef = useRef(null);
+  
   useEffect(() => {
-    if (elementRef.current) {
-      gsap.fromTo(
-        elementRef.current,
-        animation.from,
-        {
-          ...animation.to,
-          delay,
-          scrollTrigger: {
-            trigger: elementRef.current,
-            start: "top 85%",
-            toggleActions: "play none none reverse",
-          },
-        }
-      );
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    const nodes = [];
+    const nodeCount = 50;
+    
+    // Initialize nodes
+    for (let i = 0; i < nodeCount; i++) {
+      nodes.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5,
+        radius: Math.random() * 2 + 1
+      });
     }
-  }, [elementRef, animation, delay]);
+    
+    let animationId;
+    
+    function animate() {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      nodes.forEach((node, i) => {
+        node.x += node.vx;
+        node.y += node.vy;
+        
+        // Bounce off walls
+        if (node.x < 0 || node.x > canvas.width) node.vx *= -1;
+        if (node.y < 0 || node.y > canvas.height) node.vy *= -1;
+        
+        // Draw node
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(139, 92, 246, 0.6)';
+        ctx.fill();
+        
+        // Draw connections
+        nodes.slice(i + 1).forEach(otherNode => {
+          const dx = otherNode.x - node.x;
+          const dy = otherNode.y - node.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance < 150) {
+            ctx.beginPath();
+            ctx.moveTo(node.x, node.y);
+            ctx.lineTo(otherNode.x, otherNode.y);
+            ctx.strokeStyle = `rgba(139, 92, 246, ${0.2 * (1 - distance / 150)})`;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+        });
+      });
+      
+      animationId = requestAnimationFrame(animate);
+    }
+    
+    animate();
+    
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(animationId);
+    };
+  }, []);
+  
+  return (
+    <canvas
+      ref={canvasRef}
+      className="fixed top-0 left-0 w-full h-full pointer-events-none opacity-30"
+      style={{ zIndex: 0 }}
+    />
+  );
+};
+
+// Cursor Trail Effect
+const CursorTrail = () => {
+  const [trails, setTrails] = useState([]);
+  
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      const newTrail = {
+        id: Date.now(),
+        x: e.clientX,
+        y: e.clientY
+      };
+      
+      setTrails(prev => [...prev.slice(-10), newTrail]);
+    };
+    
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+  
+  return (
+    <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 9999 }}>
+      {trails.map((trail) => (
+        <motion.div
+          key={trail.id}
+          className="absolute w-2 h-2 rounded-full bg-cyan-400"
+          style={{
+            left: trail.x,
+            top: trail.y,
+            boxShadow: '0 0 10px rgba(34, 211, 238, 0.8)'
+          }}
+          initial={{ scale: 1, opacity: 0.8 }}
+          animate={{ scale: 0, opacity: 0 }}
+          transition={{ duration: 0.6 }}
+        />
+      ))}
+    </div>
+  );
 };
 
 const SkillBar = ({ skill, percentage, color }) => {
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-        }
-      },
-      { threshold: 0.5 }
-    );
-
-    const element = document.getElementById(`skill-${skill}`);
-    if (element) {
-      observer.observe(element);
-    }
-
-    return () => {
-      if (element) {
-        observer.unobserve(element);
-      }
-    };
-  }, [skill]);
-
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, amount: 0.5 });
+  
   return (
-    <div className="mb-4" id={`skill-${skill}`}>
-      <div className="flex justify-between items-center mb-2">
-        <span className="text-white text-sm font-mono">{skill}</span>
-        <span className="text-secondary text-xs">{percentage}%</span>
+    <div className="mb-6 group" ref={ref}>
+      <div className="flex justify-between items-center mb-3">
+        <span className="text-white text-sm font-medium tracking-wide">{skill}</span>
+        <span className="text-cyan-400 text-xs font-mono">{percentage}%</span>
       </div>
-      <div className="w-full bg-gray-700 rounded-full h-2">
+      <div className="relative w-full h-2 bg-gray-900/50 rounded-full overflow-hidden backdrop-blur-sm border border-purple-500/20">
         <motion.div
-          className={`h-2 rounded-full ${color}`}
+          className={`absolute top-0 left-0 h-full rounded-full ${color} relative overflow-hidden`}
           initial={{ width: 0 }}
-          animate={{ width: isVisible ? `${percentage}%` : 0 }}
+          animate={{ width: isInView ? `${percentage}%` : 0 }}
           transition={{ duration: 1.5, ease: "easeOut" }}
-        />
+        >
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+            animate={{ x: ['-100%', '200%'] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          />
+        </motion.div>
+        <div className="absolute inset-0 rounded-full shadow-inner" />
       </div>
     </div>
   );
 };
 
 const ServiceCard = ({ index, title, icon }) => {
-  const cardRef = useRef(null);
-  useGsap(cardRef, {
-    from: { opacity: 0, y: 100, scale: 0.8 },
-    to: { opacity: 1, y: 0, scale: 1, duration: 1, ease: "power3.out" },
-  }, index * 0.2);
-
+  const [isHovered, setIsHovered] = useState(false);
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, amount: 0.3 });
+  
+  const [rotateX, setRotateX] = useState(0);
+  const [rotateY, setRotateY] = useState(0);
+  
+  const handleMouseMove = (e) => {
+    if (!ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateXValue = ((y - centerY) / centerY) * -10;
+    const rotateYValue = ((x - centerX) / centerX) * 10;
+    setRotateX(rotateXValue);
+    setRotateY(rotateYValue);
+  };
+  
+  const handleMouseLeave = () => {
+    setRotateX(0);
+    setRotateY(0);
+  };
+  
   return (
-    <Tilt className="xs:w-[250px] w-full">
-      <motion.div 
-        ref={cardRef} 
-        className="w-full green-pink-gradient p-[1px] rounded-[20px] shadow-card"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+    <motion.div
+      ref={ref}
+      className="relative w-full group xs:w-[250px]"
+      initial={{ opacity: 0, y: 100, scale: 0.8 }}
+      animate={isInView ? { opacity: 1, y: 0, scale: 1 } : {}}
+      transition={{ duration: 1, delay: index * 0.2, ease: "easeOut" }}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      onHoverStart={() => setIsHovered(true)}
+      onHoverEnd={() => setIsHovered(false)}
+      whileHover={{ scale: 1.05, y: -10 }}
+      whileTap={{ scale: 0.98 }}
+      style={{
+        perspective: 1000,
+        transformStyle: 'preserve-3d'
+      }}
+    >
+      {/* Glowing border effect */}
+      <motion.div
+        className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 via-cyan-500 to-purple-600 rounded-3xl blur opacity-60 group-hover:opacity-100 transition duration-300"
+        animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
+        transition={{ duration: 3, repeat: Infinity }}
+      />
+      
+      {/* Card content */}
+      <motion.div
+        className="relative bg-black/80 backdrop-blur-xl rounded-3xl p-8 min-h-[280px] flex flex-col justify-center items-center border border-purple-500/20 overflow-hidden"
+        style={{
+          rotateX: rotateX,
+          rotateY: rotateY,
+          transformStyle: 'preserve-3d'
+        }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
       >
-        <div className="bg-tertiary rounded-[20px] py-5 px-12 min-h-[280px] flex justify-evenly items-center flex-col relative overflow-hidden">
-          {/* Animated background pattern */}
-          <div className="absolute inset-0 opacity-5">
-            <div className="absolute top-2 left-2 w-8 h-8 border border-[#915EFF] rounded-full"></div>
-            <div className="absolute bottom-2 right-2 w-6 h-6 border border-[#915EFF] rounded-full"></div>
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 border border-[#915EFF] rounded-full"></div>
+        {/* Holographic overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        
+        {/* Animated grid pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute inset-0" style={{
+            backgroundImage: 'linear-gradient(rgba(139, 92, 246, 0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(139, 92, 246, 0.3) 1px, transparent 1px)',
+            backgroundSize: '20px 20px'
+          }} />
         </div>
-          
-          <img src={icon} alt="web-development" className="w-16 h-16 object-contain relative z-10" />
-          <h3 className="text-white text-[20px] font-bold text-center relative z-10">{title}</h3>
-          
-          {/* Glow effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#915EFF]/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-      </div>
+        
+        {/* Floating orbs */}
+        <motion.div
+          className="absolute top-4 right-4 w-16 h-16 rounded-full bg-purple-500/20 blur-xl"
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.6, 0.3]
+          }}
+          transition={{
+            duration: 3,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        
+        {/* Icon */}
+        <motion.div
+          className="text-6xl mb-4 relative z-10"
+          animate={isHovered ? {
+            rotateY: 360,
+            scale: [1, 1.2, 1]
+          } : {}}
+          transition={{ duration: 0.6 }}
+        >
+          {icon}
+        </motion.div>
+        
+        {/* Title */}
+        <h3 className="text-white text-xl font-bold text-center relative z-10 tracking-wide">
+          {title}
+        </h3>
+        
+        {/* Scanning line effect */}
+        <motion.div
+          className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent"
+          animate={{
+            top: ['0%', '100%']
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: "linear"
+          }}
+        />
       </motion.div>
-    </Tilt>
+    </motion.div>
   );
 };
 
 const About = () => {
   const headingRef = useRef(null);
   const paragraphRef = useRef(null);
-  const [activeTab, setActiveTab] = useState('overview');
-
-  // Heading Animation
-  useGsap(headingRef, {
-    from: { opacity: 0, x: -50 },
-    to: { opacity: 1, x: 0, duration: 1, ease: "power2.out" },
-  });
-
-  // Paragraph Animation
-  useGsap(paragraphRef, {
-    from: { opacity: 0, y: 50 },
-    to: { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" },
-  }, 0.3);
-
+  const [activeTab, setActiveTab] = useState("overview");
+  
+  const headingInView = useInView(headingRef, { once: true, amount: 0.5 });
+  const paragraphInView = useInView(paragraphRef, { once: true, amount: 0.3 });
+  
   const skills = [
-    { skill: "React/Next.js", percentage: 95, color: "bg-blue-500" },
-    { skill: "Python/AI", percentage: 90, color: "bg-green-500" },
-    { skill: "TypeScript", percentage: 88, color: "bg-purple-500" },
-    { skill: "AI Agents", percentage: 85, color: "bg-pink-500" },
-    { skill: "Web3/Blockchain", percentage: 80, color: "bg-yellow-500" },
-    { skill: "Business Analysis", percentage: 85, color: "bg-indigo-500" },
+    { skill: "HTML5 / CSS3", percentage: 95, color: "bg-gradient-to-r from-orange-500 to-red-500" },
+    { skill: "JavaScript (ES6+)", percentage: 92, color: "bg-gradient-to-r from-yellow-400 to-orange-500" },
+    { skill: "TypeScript", percentage: 90, color: "bg-gradient-to-r from-blue-600 to-blue-400" },
+    { skill: "React.js", percentage: 95, color: "bg-gradient-to-r from-cyan-500 to-blue-500" },
+    { skill: "Next.js", percentage: 92, color: "bg-gradient-to-r from-gray-800 to-gray-600" },
+    { skill: "Tailwind CSS", percentage: 90, color: "bg-gradient-to-r from-sky-400 to-cyan-500" },
+    { skill: "Node.js / Express.js", percentage: 85, color: "bg-gradient-to-r from-green-600 to-emerald-500" },
+    { skill: "Sanity CMS", percentage: 87, color: "bg-gradient-to-r from-red-400 to-pink-500" },
+    { skill: "MongoDB", percentage: 85, color: "bg-gradient-to-r from-green-500 to-green-400" },
+    { skill: "Vercel / Netlify", percentage: 82, color: "bg-gradient-to-r from-gray-400 to-gray-300" },
+    { skill: "Python", percentage: 88, color: "bg-gradient-to-r from-blue-400 to-indigo-500" },
+    { skill: "AI Agents (OpenAI SDK)", percentage: 85, color: "bg-gradient-to-r from-pink-500 to-purple-600" },
+    { skill: "Machine Learning Basics", percentage: 78, color: "bg-gradient-to-r from-purple-500 to-violet-600" },
+    { skill: "Git / GitHub", percentage: 90, color: "bg-gradient-to-r from-gray-700 to-gray-900" },
+    { skill: "UI/UX Design (Figma, Adobe XD)", percentage: 87, color: "bg-gradient-to-r from-violet-500 to-purple-600" },
+    { skill: "Problem Solving & Analysis", percentage: 92, color: "bg-gradient-to-r from-teal-500 to-cyan-600" },
+    { skill: "Business Analysis", percentage: 85, color: "bg-gradient-to-r from-indigo-600 to-purple-700" },
   ];
-
+  
   const tabs = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'skills', label: 'Skills' },
-    { id: 'education', label: 'Education' }
+    { id: "overview", label: "Overview", icon: "👁️" },
+    { id: "skills", label: "Skills", icon: "⚡" },
+    { id: "education", label: "Education", icon: "🎓" },
   ];
 
   return (
-    <>
-      <div ref={headingRef}>
-        <p className={styles.sectionSubText}>Introduction</p>
-        <h2 className={styles.sectionHeadText}>About Me.</h2>
-      </div>
-
-      {/* Tab Navigation */}
-      <motion.div 
-        className="flex gap-4 mt-8 mb-6"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-      >
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2 rounded-lg font-mono text-sm transition-all duration-300 ${
-              activeTab === tab.id
-                ? 'bg-[#915EFF] text-white'
-                : 'bg-tertiary text-secondary hover:bg-[#915EFF]/20'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </motion.div>
-
-      {/* Tab Content */}
+    <div className="relative min-h-screen py-20 px-4 sm:px-8 overflow-hidden bg-black">
+      {/* Neural Network Background */}
+      <NeuralBackground />
+      <CursorTrail />
+      
+      {/* Gradient overlays */}
+      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-purple-900/20 via-transparent to-cyan-900/20 pointer-events-none" />
+      
       <motion.div
-        key={activeTab}
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        {activeTab === 'overview' && (
-          <div>
-                   <p ref={paragraphRef} className="mt-4 text-secondary text-[17px] max-w-3xl leading-[30px]">
-               A passionate Generative AI and Agentic AI Engineer with strong expertise in OpenAI Agent SDKs, MCPs, RAG (Retrieval-Augmented Generation), n8n workflow automation, and modern AI tools. Proficient in JavaScript, Python, React, Next.js, and TypeScript. My journey into technology began with a deep curiosity, leading me to master AI-driven development while exploring cutting-edge AI technologies and their transformative potential. Currently pursuing a Bachelor's in Business Administration, I aim to merge advanced AI technical expertise with strategic business insights. My work involves building innovative AI-powered applications, intelligent agent systems, workflow automation, and leveraging Web3 technologies.
-             </p>
-            
-            {/* AI Stats */}
-            <motion.div 
-              className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4"
-              initial={{ opacity: 0, y: 30 }}
+        className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl"
+        animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+        transition={{ duration: 5, repeat: Infinity }}
+      />
+      
+      <motion.div
+        className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-600/20 rounded-full blur-3xl"
+        animate={{ scale: [1.2, 1, 1.2], opacity: [0.3, 0.5, 0.3] }}
+        transition={{ duration: 5, repeat: Infinity }}
+      />
+      
+      <div className="relative z-10 max-w-7xl mx-auto">
+        {/* Header */}
+        <motion.div
+          ref={headingRef}
+          className="mb-12"
+          initial={{ opacity: 0, x: -50 }}
+          animate={headingInView ? { opacity: 1, x: 0 } : {}}
+          transition={{ duration: 1 }}
+        >
+          <motion.p
+            className={`${styles.sectionSubText} mb-2`}
+            initial={{ opacity: 0, x: -20 }}
+            animate={headingInView ? { opacity: 1, x: 0 } : {}}
+            transition={{ duration: 0.6 }}
+          >
+            INTRODUCTION
+          </motion.p>
+          <motion.h2
+            className={`${styles.sectionHeadText} relative inline-block`}
+            initial={{ opacity: 0, x: -20 }}
+            animate={headingInView ? { opacity: 1, x: 0 } : {}}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            About Me
+            <motion.span
+              className="absolute -bottom-2 left-0 h-1 bg-gradient-to-r from-purple-600 via-cyan-500 to-transparent"
+              initial={{ width: 0 }}
+              animate={headingInView ? { width: "100%" } : {}}
+              transition={{ duration: 1, delay: 0.5 }}
+            />
+          </motion.h2>
+        </motion.div>
+
+        {/* Tab Navigation */}
+        <motion.div
+          className="flex flex-wrap gap-4 mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+        >
+          {tabs.map((tab, index) => (
+            <motion.button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`relative px-6 py-3 rounded-xl font-medium text-sm transition-all duration-300 overflow-hidden group ${
+                activeTab === tab.id 
+                  ? "text-white" 
+                  : "text-gray-400 hover:text-white"
+              }`}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 }}
+              transition={{ delay: 0.7 + index * 0.1 }}
             >
-              <div className="text-center p-4 bg-tertiary rounded-lg">
-                <div className="text-2xl font-bold text-[#915EFF]">5+</div>
-                <div className="text-xs text-secondary">AI Projects</div>
+              {/* Background */}
+              <div className={`absolute inset-0 transition-opacity duration-300 ${
+                activeTab === tab.id ? "opacity-100" : "opacity-0 group-hover:opacity-50"
+              }`}>
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-cyan-500" />
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-cyan-500 blur-xl opacity-50" />
               </div>
-              <div className="text-center p-4 bg-tertiary rounded-lg">
-                <div className="text-2xl font-bold text-[#915EFF]">1+</div>
-                <div className="text-xs text-secondary">Year Experience</div>
-              </div>
-              <div className="text-center p-4 bg-tertiary rounded-lg">
-                <div className="text-2xl font-bold text-[#915EFF]">15+</div>
-                <div className="text-xs text-secondary">Technologies</div>
-              </div>
-              <div className="text-center p-4 bg-tertiary rounded-lg">
-                <div className="text-2xl font-bold text-[#915EFF]">100%</div>
-                <div className="text-xs text-secondary">Remote Ready</div>
-              </div>
-            </motion.div>
-          </div>
-        )}
+              
+              {/* Border */}
+              <div className={`absolute inset-0 rounded-xl border transition-all duration-300 ${
+                activeTab === tab.id 
+                  ? "border-purple-500" 
+                  : "border-gray-700 group-hover:border-purple-500/50"
+              }`} />
+              
+              {/* Content */}
+              <span className="relative flex items-center gap-2">
+                <span className="text-lg">{tab.icon}</span>
+                {tab.label}
+              </span>
+            </motion.button>
+          ))}
+        </motion.div>
 
-        {activeTab === 'skills' && (
-          <div className="mt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
-                <h3 className="text-white text-lg font-bold mb-4">Technical Skills</h3>
-                {skills.map((skill) => (
-                  <SkillBar
-                    key={skill.skill}
-                    skill={skill.skill}
-                    percentage={skill.percentage}
-                    color={skill.color}
-                  />
+        {/* Tab Content */}
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          transition={{ duration: 0.4 }}
+          className="relative"
+        >
+          {activeTab === "overview" && (
+            <div className="space-y-8">
+              <motion.div
+                ref={paragraphRef}
+                className="relative p-8 rounded-2xl bg-black/40 backdrop-blur-xl border border-purple-500/20 overflow-hidden"
+                initial={{ opacity: 0, y: 50 }}
+                animate={paragraphInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 1.2, delay: 0.3 }}
+              >
+                {/* Glassmorphic effect */}
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-cyan-500/5" />
+                
+                <p className="relative text-gray-300 text-lg leading-relaxed">
+                  I'm <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400 font-bold">Fiza Nazz</span>, an AI Engineer, Full-Stack Developer, and UI/UX
+                  Designer from Karachi, Pakistan. With expertise in React, Next.js,
+                  TypeScript, Python, and Agentic AI, I build intelligent, scalable,
+                  and user-friendly digital experiences. As a Student Leader at the
+                  Governor IT Initiative, I specialize in Full-Stack Development,
+                  Cloud Computing, and AI-powered solutions while also pursuing my
+                  Master's degree in Islamic Studies. My journey spans across
+                  frontend and backend development, UI/UX design, and AI-driven
+                  automation, with hands-on experience in delivering impactful
+                  projects like e-commerce platforms, booking systems, and
+                  intelligent web apps. Passionate about blending creativity with
+                  technology, my mission is to shape the future of AI-driven digital
+                  solutions through innovation and excellence.
+                </p>
+              </motion.div>
+              
+              {/* AI Stats */}
+              <motion.div
+                className="grid grid-cols-2 md:grid-cols-4 gap-4"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8 }}
+              >
+                {[
+                  { value: "5+", label: "AI Projects" },
+                  { value: "1+", label: "Year Experience" },
+                  { value: "15+", label: "Technologies" },
+                  { value: "100%", label: "Remote Ready" }
+                ].map((stat, index) => (
+                  <motion.div
+                    key={stat.label}
+                    className="relative group"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.9 + index * 0.1 }}
+                  >
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-cyan-500 rounded-2xl blur opacity-40 group-hover:opacity-100 transition duration-300" />
+                    <div className="relative text-center p-6 bg-black/80 backdrop-blur-xl rounded-2xl border border-purple-500/20">
+                      <motion.div
+                        className="text-3xl font-black bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent"
+                        whileHover={{ scale: 1.1 }}
+                      >
+                        {stat.value}
+                      </motion.div>
+                      <div className="text-xs text-gray-400 mt-2 tracking-wide">{stat.label}</div>
+                    </div>
+                  </motion.div>
                 ))}
-              </div>
-              <div>
-                <h3 className="text-white text-lg font-bold mb-4">AI & Business Focus</h3>
+              </motion.div>
+            </div>
+          )}
+
+          {activeTab === "skills" && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <motion.div
+                className="relative p-8 rounded-2xl bg-black/40 backdrop-blur-xl border border-purple-500/20"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <h3 className="text-white text-2xl font-bold mb-6 flex items-center gap-3">
+                  <span className="text-3xl">💻</span>
+                  Technical Arsenal
+                </h3>
                 <div className="space-y-4">
-                  <div className="p-4 bg-tertiary rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                      <span className="text-white font-semibold">Agentic AI Development</span>
-                    </div>
-                    <p className="text-secondary text-sm">Building intelligent agents with OpenAI SDK and custom workflows</p>
-                  </div>
-                  <div className="p-4 bg-tertiary rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
-                      <span className="text-white font-semibold">Web3 Integration</span>
-                    </div>
-                    <p className="text-secondary text-sm">Smart contracts, metaverse development, and blockchain solutions</p>
-                  </div>
-                  <div className="p-4 bg-tertiary rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-3 h-3 bg-purple-500 rounded-full animate-pulse"></div>
-                      <span className="text-white font-semibold">Business Intelligence</span>
-                    </div>
-                    <p className="text-secondary text-sm">Merging technical expertise with strategic business insights</p>
-                  </div>
+                  {skills.map((skill, index) => (
+                    <motion.div
+                      key={skill.skill}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.3 + index * 0.05 }}
+                    >
+                      <SkillBar {...skill} />
+                    </motion.div>
+                  ))}
                 </div>
-              </div>
+              </motion.div>
+              
+              <motion.div
+                className="space-y-4"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <h3 className="text-white text-2xl font-bold mb-6 flex items-center gap-3">
+                  <span className="text-3xl">🧠</span>
+                  AI & Innovation Focus
+                </h3>
+                
+                {[
+                  {
+                    title: "Agentic AI Development",
+                    desc: "Building intelligent agents with OpenAI SDK and custom workflows",
+                    color: "from-green-500 to-emerald-600",
+                    icon: "🤖"
+                  },
+                  {
+                    title: "Web3 Integration",
+                    desc: "Smart contracts, metaverse development, and blockchain solutions",
+                    color: "from-blue-500 to-cyan-600",
+                    icon: "⛓️"
+                  },
+                  {
+                    title: "Business Intelligence",
+                    desc: "Merging technical expertise with strategic business insights",
+                    color: "from-purple-500 to-pink-600",
+                    icon: "📊"
+                  }
+                ].map((item, index) => (
+                  <motion.div
+                    key={item.title}
+                    className="relative group"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 + index * 0.1 }}
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <div className={`absolute -inset-0.5 bg-gradient-to-r ${item.color} rounded-2xl blur opacity-20 group-hover:opacity-60 transition duration-300`} />
+                    <div className="relative p-6 bg-black/80 backdrop-blur-xl rounded-2xl border border-purple-500/20">
+                      <div className="flex items-start gap-4">
+                        <div className="text-3xl">{item.icon}</div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <motion.div
+                              className={`w-2 h-2 rounded-full bg-gradient-to-r ${item.color}`}
+                              animate={{
+                                scale: [1, 1.5, 1],
+                                opacity: [0.5, 1, 0.5]
+                              }}
+                              transition={{
+                                duration: 2,
+                                repeat: Infinity,
+                                ease: "easeInOut"
+                              }}
+                            />
+                            <span className="text-white font-semibold text-lg">
+                              {item.title}
+                            </span>
+                          </div>
+                          <p className="text-gray-400 text-sm leading-relaxed">
+                            {item.desc}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </motion.div>
             </div>
-          </div>
-        )}
+          )}
 
-        {activeTab === 'education' && (
-          <div className="mt-4">
-            <div className="p-6 bg-tertiary rounded-lg">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-[#915EFF] rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold">🎓</span>
+          {activeTab === "education" && (
+            <div className="space-y-6">
+              <motion.div
+                className="relative group"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-cyan-500 rounded-2xl blur opacity-40 group-hover:opacity-100 transition duration-300" />
+                <div className="relative p-8 bg-black/80 backdrop-blur-xl rounded-2xl border border-purple-500/20">
+                  <div className="flex items-start gap-6">
+                    <motion.div
+                      className="w-16 h-16 bg-gradient-to-br from-purple-600 to-cyan-500 rounded-2xl flex items-center justify-center flex-shrink-0"
+                      whileHover={{ rotate: 360, scale: 1.1 }}
+                      transition={{ duration: 0.6 }}
+                    >
+                      <span className="text-3xl">🎓</span>
+                    </motion.div>
+                    <div className="flex-1">
+                      <h3 className="text-white text-xl font-bold mb-2">
+                        Master of Arts (M.A.) in Islamic Studies
+                      </h3>
+                      <p className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400 text-sm font-semibold mb-1">
+                        Darus Salam University, Karachi
+                      </p>
+                      <p className="text-gray-400 text-sm mb-3">2020 – Present (Expected 2026)</p>
+                      <p className="text-gray-300 text-sm mb-2 font-medium">Major: Islamic Studies</p>
+                      <p className="text-gray-300 text-sm leading-relaxed">
+                        Related Coursework: Islamic Research, Quranic Studies, Hadith, Fiqh
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-white text-lg font-bold">Bachelor's in Business Administration</h3>
-                  <p className="text-[#915EFF] text-sm">Institute of Health and Business Management - JSMU</p>
-                  <p className="text-secondary text-sm">2024 - 2028</p>
-                  <p className="text-secondary text-sm mt-2">
-                    Currently pursuing BBA to merge technical expertise with strategic business insights, 
-                    focusing on entrepreneurship and core banking principles.
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="mt-6 p-6 bg-tertiary rounded-lg">
-              <h3 className="text-white text-lg font-bold mb-4">Certifications & Training</h3>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-[#915EFF] rounded-full"></div>
-                  <span className="text-secondary">Generative AI, Web3 & Metaverse - Governor Sindh Initiative</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-[#915EFF] rounded-full"></div>
-                  <span className="text-secondary">AI Agent Development - OpenAI & Agent SDK</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-[#915EFF] rounded-full"></div>
-                  <span className="text-secondary">Frontend Development - React, Next.js, TypeScript</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </motion.div>
+              </motion.div>
 
-      <div className="mt-20 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 justify-items-center gap-10">
-        {services.map((service, index) => (
-          <ServiceCard key={service.title} index={index} {...service} />
-        ))}
+              <motion.div
+                className="relative group"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-cyan-500 rounded-2xl blur opacity-40 group-hover:opacity-100 transition duration-300" />
+                <div className="relative p-8 bg-black/80 backdrop-blur-xl rounded-2xl border border-purple-500/20">
+                  <div className="flex items-start gap-6">
+                    <motion.div
+                      className="w-16 h-16 bg-gradient-to-br from-purple-600 to-cyan-500 rounded-2xl flex items-center justify-center flex-shrink-0"
+                      whileHover={{ rotate: 360, scale: 1.1 }}
+                      transition={{ duration: 0.6 }}
+                    >
+                      <span className="text-3xl">💻</span>
+                    </motion.div>
+                    <div className="flex-1">
+                      <h3 className="text-white text-xl font-bold mb-2">
+                        Governor IT Initiative – Student Leader
+                      </h3>
+                      <p className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400 text-sm font-semibold mb-1">
+                        Governor House, Karachi
+                      </p>
+                      <p className="text-gray-400 text-sm mb-3">2024 – Present</p>
+                      <p className="text-gray-300 text-sm mb-2 font-medium">Major: Information Technology & Agentic AI</p>
+                      <p className="text-gray-300 text-sm leading-relaxed">
+                        Related Coursework: Full-Stack Development, AI Agents Development, Cloud Computing
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Services Section */}
+              <motion.div
+                className="mt-12"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+              >
+                <h3 className="text-white text-2xl font-bold mb-8 text-center">
+                  What I Offer
+                </h3>
+                <div className="flex flex-wrap justify-center gap-8">
+                  {services.map((service, index) => (
+                    <ServiceCard
+                      key={service.title}
+                      index={index}
+                      title={service.title}
+                      icon={service.icon}
+                    />
+                  ))}
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </motion.div>
       </div>
-    </>
+    </div>
   );
 };
 
+// Export the component with SectionWrapper
 export default SectionWrapper(About, "about");
