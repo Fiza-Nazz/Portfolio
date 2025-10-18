@@ -15,6 +15,7 @@
     "@react-three/drei": "^9.122.0",
     "@react-three/fiber": "^8.18.0",
     "@tsparticles/react": "^3.0.0",
+    "@vercel/speed-insights": "^1.2.0",
     "caniuse-lite": "^1.0.30001750",
     "email-js": "^2.0.3",
     "framer-motion": "^9.1.7",
